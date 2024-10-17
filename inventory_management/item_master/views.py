@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Item
 from .forms import ItemForm
+from django.contrib import messages
 
 def item_list(request):
     search_query = request.GET.get('search', '')
@@ -13,14 +14,23 @@ def item_list(request):
 
 def add_item(request):
     if request.method == 'POST':
-        form = ItemForm(request.POST, request.FILES)  # Include request.FILES for image uploads
+        form = ItemForm(request.POST, request.FILES)
+        
         if form.is_valid():
-            form.save()
-            return redirect('item_list')
+            item_name = form.cleaned_data['item_name'].lower()
+
+            # Check for duplicates, case-insensitive
+            if Item.objects.filter(item_name__iexact=item_name).exists():
+                messages.error(request, f'Item "{form.cleaned_data["item_name"]}" already exists!')
+            else:
+                # No need to manually convert to uppercase here, model will handle it
+                form.save()
+                messages.success(request, 'Item added successfully!')
+                return redirect('item_list')
     else:
         form = ItemForm()
-    return render(request, 'item_master/add_item.html', {'form': form})
 
+    return render(request, 'item_master/add_item.html', {'form': form})
 def dashboard(request):
     total_items = Item.objects.count()
     active_items = Item.objects.filter(status=True).count()
