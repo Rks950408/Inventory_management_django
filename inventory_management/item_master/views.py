@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Item
 from .forms import ItemForm
 from django.contrib import messages
@@ -43,3 +43,25 @@ def dashboard(request):
     }
 
     return render(request, 'item_master/dashboard.html', context)
+
+# Edit Item by ID
+def edit_item(request, id):
+    item = get_object_or_404(Item, id=id)
+    if request.method == 'POST':
+        form = ItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect('item_list')  
+    else:
+        form = ItemForm(instance=item)
+
+    return render(request, 'item_master/edit_item.html', {'form': form, 'item': item})
+
+# Delete Item by ID
+def delete_item(request, id):
+    item = get_object_or_404(Item, id=id)
+    if request.method == 'POST':  
+        item.delete()
+        return redirect('item_list')  
+
+    return render(request, 'item_master/delete_item.html', {'item': item})
