@@ -17,20 +17,22 @@ def add_item(request):
         form = ItemForm(request.POST, request.FILES)
         
         if form.is_valid():
-            item_name = form.cleaned_data['item_name'].lower()
+            item = form.save(commit=False)  # Don't save to the database yet
+            item.status = True  # Automatically set the status to True
+            item.item_name = item.item_name.lower()
 
             # Check for duplicates, case-insensitive
-            if Item.objects.filter(item_name__iexact=item_name).exists():
+            if Item.objects.filter(item_name__iexact=item.item_name).exists():
                 messages.error(request, f'Item "{form.cleaned_data["item_name"]}" already exists!')
             else:
-                # No need to manually convert to uppercase here, model will handle it
-                form.save()
+                item.save()  # Now save the item with the status set to True
                 messages.success(request, 'Item added successfully!')
                 return redirect('item_list')
     else:
         form = ItemForm()
 
     return render(request, 'item_master/add_item.html', {'form': form})
+
 def dashboard(request):
     total_items = Item.objects.count()
     active_items = Item.objects.filter(status=True).count()
