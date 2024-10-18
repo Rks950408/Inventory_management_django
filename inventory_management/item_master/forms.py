@@ -3,6 +3,7 @@ from .models import Item
 
 CATEGORY_CHOICES = [
     ('Electronics', 'Electronics'),
+    ('Stationary', 'Stationary'),
     ('Clothing', 'Clothing'),
     ('Home Goods', 'Home Goods'),
     ('Books', 'Books'),

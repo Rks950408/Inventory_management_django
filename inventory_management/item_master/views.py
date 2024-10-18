@@ -15,17 +15,20 @@ def item_list(request):
 def add_item(request):
     if request.method == 'POST':
         form = ItemForm(request.POST, request.FILES)
-        
-        if form.is_valid():
-            item = form.save(commit=False)  # Don't save to the database yet
-            item.status = True  # Automatically set the status to True
-            item.item_name = item.item_name.lower()
 
-            # Check for duplicates, case-insensitive
+        if form.is_valid():
+            item = form.save(commit=False) 
+            item.status = True  
+
+            item.item_name = item.item_name.capitalize()
+            item.category = item.category.capitalize()
+            item.unit_price = form.cleaned_data['unit_price']
+            item.image = request.FILES.get('image')
+
             if Item.objects.filter(item_name__iexact=item.item_name).exists():
                 messages.error(request, f'Item "{form.cleaned_data["item_name"]}" already exists!')
             else:
-                item.save()  # Now save the item with the status set to True
+                item.save()  
                 messages.success(request, 'Item added successfully!')
                 return redirect('item_list')
     else:
