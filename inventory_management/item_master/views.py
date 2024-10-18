@@ -5,7 +5,7 @@ from django.contrib import messages
 
 def item_list(request):
     search_query = request.GET.get('search', '')
-    items = Item.objects.all()
+    items = Item.objects.filter(status=True)  # Filter items with status=True
 
     if search_query:
         items = items.filter(item_name__icontains=search_query)

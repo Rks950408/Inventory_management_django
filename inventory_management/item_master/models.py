@@ -11,5 +11,11 @@ class Item(models.Model):
     def __str__(self):
         return self.item_name
 
+    def delete(self, *args, **kwargs):
+        # Instead of deleting the object, just set status to False
+        self.status = False
+        self.save()
     class Meta:
         db_table = 'item_master'
+        managed=False
+        
