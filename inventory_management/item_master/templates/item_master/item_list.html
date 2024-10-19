@@ -20,7 +20,6 @@
                 <th>Category</th>
                 <th>Unit Price</th>
                 <th>Images</th>
-                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -37,7 +36,7 @@
                         No image available
                     {% endif %}
                 </td>                
-                <td>{{ item.status|yesno:"Active,Inactive" }}</td>
+                {% comment %} <td>{{ item.status|yesno:"Active,Inactive" }}</td> {% endcomment %}
                  <td>
             <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-info">Edit</a>
             <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-danger">Delete</a>

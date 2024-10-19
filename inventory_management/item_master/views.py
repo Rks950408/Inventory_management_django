@@ -20,8 +20,8 @@ def add_item(request):
             item = form.save(commit=False) 
             item.status = True  
 
-            item.item_name = item.item_name.capitalize()
-            item.category = item.category.capitalize()
+            item.item_name = item.item_name.upper()
+            item.category = item.category.upper()
             item.unit_price = form.cleaned_data['unit_price']
             item.image = request.FILES.get('image')
 
