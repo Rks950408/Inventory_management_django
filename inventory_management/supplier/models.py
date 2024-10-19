@@ -8,8 +8,12 @@ class Supplier(models.Model):
     address = models.CharField(max_length=255)
     status = models.BooleanField(default=True)
     entry_date = models.DateTimeField(auto_now_add=True)
-    user_id = models.IntegerField()
+    # user_id = models.IntegerField()
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = 'supplier_master'
+        managed=False
 

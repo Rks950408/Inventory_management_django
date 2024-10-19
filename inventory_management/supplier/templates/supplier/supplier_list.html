@@ -4,15 +4,15 @@
 
 {% block content %}
 <div class="container">
-    <h2>Suppliers List</h2>
-
+    <h2>Suppliers List :</h2>
+    <br>
     <table class="table table-striped">
         <thead>
             <tr>
                 <th>Name</th>
                 <th>Contact</th>
                 <th>Address</th>
-                <th>Status</th>
+                {% comment %} <th>Status</th> {% endcomment %}
             </tr>
         </thead>
         <tbody>
@@ -21,7 +21,7 @@
                 <td>{{ supplier.name }}</td>
                 <td>{{ supplier.contact }}</td>
                 <td>{{ supplier.address }}</td>
-                <td>{{ supplier.status|yesno:"Active,Inactive" }}</td>
+                {% comment %} <td>{{ supplier.status|yesno:"Active,Inactive" }}</td> {% endcomment %}
             </tr>
             {% empty %}
             <tr>
@@ -30,5 +30,9 @@
             {% endfor %}
         </tbody>
     </table>
+    <br>
+    <a href="{% url 'supplier_add' %}" class="btn btn-primary">Add Suppliers</a>
 </div>
 {% endblock %}
+
+{% comment %} {% url 'add_item' %} {% endcomment %}

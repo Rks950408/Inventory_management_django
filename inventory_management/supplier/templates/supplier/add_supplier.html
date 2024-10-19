@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Supplier{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Add New Supplier</h2>
+
+    <!-- Display messages if any -->
+    {% if messages %}
+        <div>
+            {% for message in messages %}
+               <li class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+            {{ message }}
+         </li>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="">
+        {% csrf_token %}
+        {{ form.as_p }}  
+        <button type="submit" class="btn btn-primary">Add Supplier</button>
+    </form>
+    <br>
+    <a href="{% url 'supplier_list' %}" class="btn btn-secondary">Cancel</a>
+</div>
+{% endblock %}
