@@ -16,6 +16,7 @@
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>S.No</th>
                 <th>Name</th>
                 <th>Category</th>
                 <th>Brand</th>
@@ -27,6 +28,7 @@
         <tbody>
             {% for item in items %}
             <tr>
+                <td>{{ forloop.counter }}</td>
                 <td>{{ item.item_name }}</td>
                 <td>{{ item.category }}</td>
                 <td>{{ item.brand }}</td>

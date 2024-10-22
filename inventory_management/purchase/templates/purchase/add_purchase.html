@@ -10,18 +10,16 @@
         
         <!-- Row for Invoice No and Invoice Date -->
         <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="invoice_no">Invoice No:</label>
                 <input type="text" id="invoice_no" name="invoice_no" class="form-control" placeholder="Enter Invoice No">
             </div>
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="invoice_date">Invoice Date:</label>
                 <input type="date" id="invoice_date" name="invoice_date" class="form-control">
             </div>
-        </div>
-<!-- Row for Supplier Name and Supplier Details -->
-        <div class="form-row">
-            <div class="form-group col-md-6">
+
+            <div class="form-group col-md-4">
                 <label for="supplier_name">Supplier Name:</label>
                 <select id="supplier_name" name="supplier" class="form-control">
                     <option value="">Select Supplier</option>
@@ -30,37 +28,36 @@
                     {% endfor %}
                 </select>
             </div>
-            
-            <div class="form-group col-md-6">
-                <label for="supplier_details">Supplier Details:</label>
-                <input type="text" id="supplier_details" name="supplier_details" class="form-control" readonly>
-            </div>
         </div>
-
 
         <!-- Row for Item Name and Quantity -->
         <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-3">
                 <label for="item_name">Item Name:</label>
-                <select id="item_name" name="item" class="form-control">
-                    {% for item in items %}
+                <select id="item_name" name="item_name" class="form-control">
+                    <option value="">Select Item</option>
+                    {% for item in item_dtls %}
                     <option value="{{ item.id }}">{{ item.item_name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group col-md-3">
-                <label for="quantity">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" class="form-control" placeholder="Enter Quantity">
-            </div>
-        </div>
 
-        <!-- Row for Price and Total -->
-        <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-3">
+                <label for="brand">Brand:</label>
+                <input type="text" id="brand" name="brand" class="form-control" readonly>
+            </div>
+
+            <div class="form-group col-md-2">
                 <label for="price">Price:</label>
                 <input type="number" id="price" name="price" class="form-control" readonly>
             </div>
-            <div class="form-group col-md-6">
+
+            <div class="form-group col-md-2">
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" placeholder="Enter Quantity">
+            </div>
+            
+            <div class="form-group col-md-2">
                 <label for="total">Total:</label>
                 <input type="number" id="total" name="total" class="form-control" readonly>
             </div>
@@ -71,7 +68,7 @@
     </form>
 
     <!-- Items List Table -->
-    <h2 class="mt-5">Items</h2>
+    <h2 class="mt-5">Purchase Details</h2>
     <table id="itemsTable" class="table table-bordered mt-3">
         <thead class="thead-dark">
             <tr>
@@ -83,7 +80,6 @@
             </tr>
         </thead>
         <tbody>
-            
         </tbody>
     </table>
 
@@ -91,35 +87,33 @@
     <br><br>
 </div>
 {% endblock %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-{% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    function fetchSupplierDetails() {
-        var supplierId = document.getElementById('supplier_name').value;  
-        
-        if (supplierId) {
-            fetch(`/supplier/${supplierId}/details/`)  
-            .then(response => response.json())
-            .then(data => {
-                if (data.address) {  
-                    document.getElementById('supplier_details').value = data.address;
-                } else {
-                    document.getElementById('supplier_details').value = "Supplier details not found";
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching supplier details:', error);
-                document.getElementById('supplier_details').value = "Error fetching details";
-            });
-        } else {
-            document.getElementById('supplier_details').value = "";  
-        }
-    }
 
-    
-    document.getElementById('supplier_name').addEventListener('change', fetchSupplierDetails);
-});
+// console.log('dfghjkjhgfghjkkjhcvbkjhg');
+// $(document).ready(function () {
+//     $('#item_name').change(function () {
+//         const itemId = $(this).val();
+//         console.log('sdfghjklkjhgfdsdfgh')
+        
+//         if (itemId) {
+//             $.ajax({ 
+//                 type: 'POST', 
+//                 url: 'get_item_detls', 
+//                 data: { item_id: itemId }, 
+//                 success: function (data) { 
+//                     $('#brand').val(data.brand);
+//                     $('#price').val(data.price);
+//                     $('#total').val(data.price * $('#quantity').val()); 
+//                 }
+//             });
+//         } else {
+//             $('#brand').val('');
+//             $('#price').val('');
+//             $('#total').val('');
+//         }
+//     });
+// });
 </script>
-{% endblock %}
