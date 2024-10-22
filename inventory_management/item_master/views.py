@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Item
 from .forms import ItemForm
 from django.contrib import messages
+from .models import BrandMaster
+from .forms import BrandForm
 
 def item_list(request):
     search_query = request.GET.get('search', '')
@@ -22,6 +24,7 @@ def add_item(request):
 
             item.item_name = item.item_name.upper()
             item.category = item.category.upper()
+            item.brand = form.cleaned_data['brand']
             item.unit_price = form.cleaned_data['unit_price']
             item.image = request.FILES.get('image')
 
@@ -70,3 +73,22 @@ def delete_item(request, id):
         return redirect('item_list')  
 
     return render(request, 'item_master/delete_item.html', {'item': item})
+
+
+def add_brand(request):
+    if request.method == 'POST':
+        form = BrandForm(request.POST)
+        if form.is_valid():
+            brand_name = form.cleaned_data['brand_name'].upper()  # Get the brand name in uppercase
+            
+            # Check if the brand already exists
+            if BrandMaster.objects.filter(brand_name__iexact=brand_name).exists():
+                messages.error(request, f'Brand "{brand_name}" already exists!')
+            else:
+                form.save()  
+                messages.success(request, 'Brand added successfully!')
+                form = BrandForm()  # Reset the form for a new entry
+    else:
+        form = BrandForm()
+
+    return render(request, 'item_master/add_brand.html', {'form': form})

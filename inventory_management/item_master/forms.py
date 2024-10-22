@@ -1,5 +1,6 @@
 from django import forms
 from .models import Item
+from .models import BrandMaster
 
 CATEGORY_CHOICES = [
     ('Electronics', 'Electronics'),
@@ -15,4 +16,9 @@ class ItemForm(forms.ModelForm):
 
     class Meta:
         model = Item
-        fields = ['item_name', 'category', 'unit_price', 'image']  
+        fields = ['item_name','brand', 'category', 'unit_price', 'image']  
+
+class BrandForm(forms.ModelForm):
+    class Meta:
+        model = BrandMaster
+        fields = ['brand_name'] 
