@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from .models import PurchaseMaster, PurchaseDetails, Item  # Update the import to use the correct models
 from supplier.models import Supplier
 
-# Create your views here.
+# Create your views heree..
 
 def purchase_list(request):
     purchases = PurchaseMaster.objects.all()  # Use PurchaseMaster instead of Purchase
