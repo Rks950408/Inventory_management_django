@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from item_master.models import Item
+from item_master.models import Item,BrandMaster
 from supplier.models import Supplier
 
 class PurchaseMaster(models.Model):
@@ -23,6 +23,7 @@ class PurchaseMaster(models.Model):
 class PurchaseDetails(models.Model):
     id = models.AutoField(primary_key=True)  # Explicitly defining the id field
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    brand_name = models.CharField(max_length=100, blank=True, null=True)
     quantity = models.PositiveIntegerField(blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
