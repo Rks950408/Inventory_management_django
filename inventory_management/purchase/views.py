@@ -1,24 +1,22 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import PurchaseMaster, PurchaseDetails, Item  # Correct model imports
+from .models import PurchaseMaster, PurchaseDetails, Item  
 from supplier.models import Supplier
 from item_master.models import BrandMaster
 from django.utils import timezone
 import datetime
 
-# Purchase list view
 def purchase_list(request):
     purchases = PurchaseMaster.objects.all()  
     return render(request, 'purchase/purchase_list.html', {'purchases': purchases})
 
-# Purchase item form view
 def purchase_item(request):
     suppliers = Supplier.objects.filter(status=1)
     item_dtls = Item.objects.filter(status=1)
     curr_date = datetime.datetime.today().strftime('%d-%m-%Y')
     
     if request.method == 'POST':
-        # Get data from the form
+      
         invoice_no = request.POST['invoice_no']
         print(invoice_no)
         invoice_date =datetime.datetime.strptime(request.POST["invoice_date"], '%d-%m-%Y').date() 
@@ -44,18 +42,18 @@ def purchase_item(request):
             status=True
         )
 
-        # If PurchaseMaster is successfully created
+       
         if insert_purchase:
-            # Insert into PurchaseDetails
+            
             insert_purchase_dtls = PurchaseDetails.objects.create(
-                item=item,  # Associate the item
-                brand_name=brand,  # Associate the brand
+                item=item, 
+                brand_name=brand,  
                 price=price,
                 quantity=quantity,
                 amount=total,  
                 datetime=timezone.now(),
                 status=True,
-                purchase_master=insert_purchase  #
+                purchase_master=insert_purchase 
             )
 
        
@@ -67,7 +65,6 @@ def purchase_item(request):
         'curr_date': curr_date
     })
 
-# Get item details via AJAX
 def get_item_detls(request):
     if request.method == 'POST':
         item_id = request.POST.get('item_id') 

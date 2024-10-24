@@ -21,7 +21,7 @@ class PurchaseMaster(models.Model):
 
 
 class PurchaseDetails(models.Model):
-    id = models.AutoField(primary_key=True)  # Explicitly defining the id field
+    id = models.AutoField(primary_key=True)  
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     brand_name = models.CharField(max_length=100, blank=True, null=True)
     quantity = models.PositiveIntegerField(blank=True, null=True)
