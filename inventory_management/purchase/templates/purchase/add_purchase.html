@@ -5,9 +5,8 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Purchase Entry</h1>
-    <form id="purchase_item" method="POST" class="mt-4">
+    <form name="master" method="POST" class="mt-4">
         {% csrf_token %}
-        
         <!-- Row for Invoice No and Invoice Date -->
         <div class="form-row">
             <div class="form-group col-md-4">
@@ -67,9 +66,11 @@
         </div>
     
         <!-- Add Item Button -->
-        <button type="button" id="addItemBtn" class="btn btn-primary">Add Item</button>
-        
+        <button type="submit" name="addItemBtn" id="addItemBtn" class="btn btn-primary">Add Item</button>
+    </form>
         <!-- Items List Table -->
+    <form name="form2" method="POST" class="mt-4">
+        {% csrf_token %}
         <h2 class="mt-5">Purchase Details</h2>
 
         <table id="itemsTable" class="table table-bordered mt-3">
@@ -83,18 +84,23 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="itemsTableBody">
-                <!-- Dynamically added rows will appear here -->
+            <tbody>
+                {% for puch in get_purchase %}
+                    <tr>
+                        <td>{{puch.id}}</td>
+                        <td>{{puch.item.item_name}}</td>
+                        <td>{{puch.price}}</td>
+                        <td>{{puch.quantity}}</td>
+                        <td>{{puch.amount}}</td>
+                        <td>Delete</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     
         <h3>Sub Total: <span id="subTotal">0.00</span></h3>
-        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
-    <br><br>
+        <button type="submit" name="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
     </form>
-    
-
-    
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -119,65 +125,6 @@
         });
     }
 
-    $(document).ready(function() {
-        let counter = 1;  // Counter for serial number
-        let subTotal = 0; // Subtotal for all items
-
-        // Add Item to Table on button click
-       $('#addItemBtn').on('click', function() {
-    const itemName = $('#item_name option:selected').text();
-    const itemId = $('#item_name').val();
-    const price = parseFloat($('#price').val());
-    const quantity = parseFloat($('#quantity').val());
-    const total = parseFloat($('#total').val());
-
-    if (itemId && quantity > 0 && total > 0) {
-        // Append item details as a row in the table
-        $('#itemsTableBody').append(`
-            <tr>
-                <td>${counter}</td>
-                <td>${itemName}</td>
-                <td>${price.toFixed(2)}</td>
-                <td>${quantity}</td>
-                <td>${total.toFixed(2)}</td>
-                <td><button type="button" class="btn btn-danger remove-item-btn">Remove</button></td>
-            </tr>
-        `);
-
-        // Add hidden input fields to the form for each item detail
-        $('#purchase_item').append(`
-            <input type="hidden" name="items[${counter}][item_id]" value="${itemId}">
-            <input type="hidden" name="items[${counter}][price]" value="${price}">
-            <input type="hidden" name="items[${counter}][quantity]" value="${quantity}">
-            <input type="hidden" name="items[${counter}][total]" value="${total}">
-        `);
-
-        subTotal += total;
-        $('#subTotal').text(subTotal.toFixed(2));
-        counter++;
-
-        // Clear the input fields after adding the item
-        $('#item_name').val('');
-        $('#brand_name').val('');
-        $('#brand').val('');
-        $('#price').val('');
-        $('#quantity').val('');
-        $('#total').val('');
-    } else {
-        alert('Please select an item and enter a valid quantity.');
-    }
-});
-
-        // Remove Item from Table
-        $('#itemsTableBody').on('click', '.remove-item-btn', function() {
-            const row = $(this).closest('tr');
-            const total = parseFloat(row.find('td:nth-child(5)').text());
-            subTotal -= total;  // Decrease subtotal
-            $('#subTotal').text(subTotal.toFixed(2)); // Update subtotal display
-            row.remove(); // Remove the row
-        });
-    });
-
     function generateInvoiceNumber() {
         const now = new Date();
         const year = now.getFullYear();
@@ -195,3 +142,7 @@
 </script>
 
 {% endblock %}
+
+
+
+

@@ -13,9 +13,10 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Item</th>
+                <th>S.no</th>
+                <th>Invoice Number</th>
+                <th>Invoice Date</th>
                 <th>Supplier</th>
-                <th>Quantity</th>
                 <th>Amount</th>
                 <th>Action</th>
 
@@ -24,11 +25,12 @@
         <tbody>
             {% for purchase in purchases %}
             <tr>
-                <td>{{ purchase.item.name }}</td>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ purchase.invoice_no }}</td>
+                <td>{{ purchase.invoice_date|date:"d-m-Y" }}</td>
                 <td>{{ purchase.supplier.name }}</td>
-                <td>{{ purchase.quantity }}</td>
-                <td>{{ purchase.amount }}</td>
-                <td>{{ purchase.amount }}</td>
+                <td>{{ purchase.total_amount }}</td>
+                <td>{{ purchase.total_amount }}</td>
             </tr>
             {% empty %}
             <tr>

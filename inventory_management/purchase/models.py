@@ -37,3 +37,21 @@ class PurchaseDetails(models.Model):
     class Meta:
         db_table = 'purchase_details'
         managed = False
+
+class TempPurchaseDtls(models.Model):
+    id = models.AutoField(primary_key=True)  
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    brand_name = models.CharField(max_length=100, blank=True, null=True)
+    quantity = models.PositiveIntegerField(blank=True, null=True)
+    price = models.FloatField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True)
+    datetime = models.DateTimeField(default=timezone.now)
+    status = models.BooleanField(default=True)
+    purchase_master = models.ForeignKey(PurchaseMaster, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.item_id} - {self.purchase_master_id}"
+    
+    class Meta:
+        db_table = 'tbl_temp_purchase_details'
+        managed = False
