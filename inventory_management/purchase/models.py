@@ -4,7 +4,7 @@ from item_master.models import Item,BrandMaster
 from supplier.models import Supplier
 
 class PurchaseMaster(models.Model):
-    id = models.AutoField(primary_key=True)  # Explicitly defining the id field
+    id = models.AutoField(primary_key=True)     
     invoice_no = models.CharField(max_length=100, blank=True, null=True)
     invoice_date = models.DateField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
