@@ -17,6 +17,8 @@
                 <th>Supplier</th>
                 <th>Quantity</th>
                 <th>Amount</th>
+                <th>Action</th>
+
             </tr>
         </thead>
         <tbody>
@@ -25,6 +27,7 @@
                 <td>{{ purchase.item.name }}</td>
                 <td>{{ purchase.supplier.name }}</td>
                 <td>{{ purchase.quantity }}</td>
+                <td>{{ purchase.amount }}</td>
                 <td>{{ purchase.amount }}</td>
             </tr>
             {% empty %}

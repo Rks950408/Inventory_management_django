@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Purchase Entry</h1>
-    <form id="purchaseForm" method="POST" class="mt-4">
+    <form id="purchase_item" method="POST" class="mt-4">
         {% csrf_token %}
         
         <!-- Row for Invoice No and Invoice Date -->
@@ -20,7 +20,7 @@
             </div>
             <div class="form-group col-md-4">
                 <label for="supplier_name">Supplier Name:</label>
-                <select id="supplier_name" name="supplier_name" class="form-control">  
+                <select id="supplier_name" name="supplier_name" class="form-control" required>  
                     <option value="">Select Supplier</option>
                     {% for supplier in suppliers %}
                         <option value="{{ supplier.id }}">{{ supplier.name }}</option>
@@ -28,46 +28,50 @@
                 </select>
             </div>
         </div>
-
+    
         <!-- Row for Item Name and Quantity -->
         <div class="form-row">
             <div class="form-group col-md-3">
                 <label for="item_name">Item Name:</label>
-                <select id="item_name" name="item_name" onchange="GetTdsAmount_Maint()" class="form-control">
+                <select id="item_name" name="item_id" onchange="GetTdsAmount_Maint()" class="form-control" required>
                     <option value="">Select Item</option>
                     {% for item in item_dtls %}
                         <option value="{{ item.id }}">{{ item.item_name }}</option>
                     {% endfor %}
                 </select>
+                {% if errors.item_id %}
+                    <div class="text-danger">{{ errors.item_id }}</div>
+                {% endif %}
             </div>
-
+    
             <div class="form-group col-md-3">
                 <label for="brand_name">Brand:</label>
-                <input type="text" id="brand_name" name="brand_name_display" class="form-control" readonly>
-                <input type="hidden" id="brand" name="brand">
+                <input type="text" id="brand_name" name="brand_name_display" class="form-control" readonly required>
+                <input type="hidden" id="brand" name="brand" required>
             </div>
-
+    
             <div class="form-group col-md-2">
                 <label for="price">Price:</label>
-                <input type="number" id="price" name="price" class="form-control" readonly>
+                <input type="number" id="price" name="price" class="form-control" readonly required>
             </div>
-
+            
             <div class="form-group col-md-2">
                 <label for="quantity">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity">
+                <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required>
             </div>
-
+            
             <div class="form-group col-md-2">
                 <label for="total">Total:</label>
                 <input type="number" id="total" name="total" class="form-control" readonly>
             </div>
         </div>
-
+    
         <!-- Add Item Button -->
         <button type="button" id="addItemBtn" class="btn btn-primary">Add Item</button>
         
         <!-- Items List Table -->
         <h2 class="mt-5">Purchase Details</h2>
+
         <table id="itemsTable" class="table table-bordered mt-3">
             <thead class="thead-dark">
                 <tr>
@@ -83,12 +87,14 @@
                 <!-- Dynamically added rows will appear here -->
             </tbody>
         </table>
-
+    
         <h3>Sub Total: <span id="subTotal">0.00</span></h3>
-    </form>
-
-    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
+        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
     <br><br>
+    </form>
+    
+
+    
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -118,46 +124,49 @@
         let subTotal = 0; // Subtotal for all items
 
         // Add Item to Table on button click
-        $('#addItemBtn').on('click', function() {
-            // Retrieve the item details from the form
-            const itemName = $('#item_name option:selected').text();
-            const itemId = $('#item_name').val();
-            const price = parseFloat($('#price').val());
-            const quantity = parseFloat($('#quantity').val());
-            const total = parseFloat($('#total').val());
+       $('#addItemBtn').on('click', function() {
+    const itemName = $('#item_name option:selected').text();
+    const itemId = $('#item_name').val();
+    const price = parseFloat($('#price').val());
+    const quantity = parseFloat($('#quantity').val());
+    const total = parseFloat($('#total').val());
 
-            // Check if the item and quantity are valid
-            if (itemId && quantity > 0 && total > 0) {
-                // Append a new row to the table
-                $('#itemsTableBody').append(`
-                    <tr>
-                        <td>${counter}</td>
-                        <td>${itemName}</td>
-                        <td>${price.toFixed(2)}</td>
-                        <td>${quantity}</td>
-                        <td>${total.toFixed(2)}</td>
-                        <td><button type="button" class="btn btn-danger remove-item-btn">Remove</button></td>
-                    </tr>
-                `);
-                
-                // Update subtotal
-                subTotal += total;
-                $('#subTotal').text(subTotal.toFixed(2));
+    if (itemId && quantity > 0 && total > 0) {
+        // Append item details as a row in the table
+        $('#itemsTableBody').append(`
+            <tr>
+                <td>${counter}</td>
+                <td>${itemName}</td>
+                <td>${price.toFixed(2)}</td>
+                <td>${quantity}</td>
+                <td>${total.toFixed(2)}</td>
+                <td><button type="button" class="btn btn-danger remove-item-btn">Remove</button></td>
+            </tr>
+        `);
 
-                // Increment the counter
-                counter++;
+        // Add hidden input fields to the form for each item detail
+        $('#purchase_item').append(`
+            <input type="hidden" name="items[${counter}][item_id]" value="${itemId}">
+            <input type="hidden" name="items[${counter}][price]" value="${price}">
+            <input type="hidden" name="items[${counter}][quantity]" value="${quantity}">
+            <input type="hidden" name="items[${counter}][total]" value="${total}">
+        `);
 
-                // Clear input fields after adding the item
-                $('#item_name').val('');
-                $('#brand_name').val('');
-                $('#brand').val('');
-                $('#price').val('');
-                $('#quantity').val('');
-                $('#total').val('');
-            } else {
-                alert('Please select an item and enter a valid quantity.');
-            }
-        });
+        subTotal += total;
+        $('#subTotal').text(subTotal.toFixed(2));
+        counter++;
+
+        // Clear the input fields after adding the item
+        $('#item_name').val('');
+        $('#brand_name').val('');
+        $('#brand').val('');
+        $('#price').val('');
+        $('#quantity').val('');
+        $('#total').val('');
+    } else {
+        alert('Please select an item and enter a valid quantity.');
+    }
+});
 
         // Remove Item from Table
         $('#itemsTableBody').on('click', '.remove-item-btn', function() {
