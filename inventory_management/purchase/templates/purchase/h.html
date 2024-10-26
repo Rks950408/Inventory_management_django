@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJAX Example</title>
+    <script src="js/ajaxscript.js" defer></script> <!-- Link to your JS file -->
+</head>
+<body>
+
+    <h1>AJAX Request Example</h1>
+
+    <button id="btnajax">Fetch Data</button> <!-- Button to trigger AJAX request -->
+
+    <div id="data" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+        <!-- The fetched data will be displayed here -->
+    </div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.getElementById("btnajax").addEventListener("click", makeRequest);
+let dt = document.getElementById("data");
+
+function makeRequest() {
+    console.log("Button Clicked");
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", "data.txt", true);
+    xhr.onload = () => {
+        if (xhr.status === 200) {
+            dt.innerText = xhr.responseText; // Display the response text in the 'data' div
+        } else {
+            console.log("Problem Occurred");
+        }
+    };
+    xhr.send();
+}

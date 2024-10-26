@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect,get_object_or_404
 from django.http import JsonResponse
 from .models import PurchaseMaster, PurchaseDetails, Item, TempPurchaseDtls
 from supplier.models import Supplier
@@ -6,9 +6,17 @@ from item_master.models import BrandMaster
 from django.utils import timezone
 import datetime
 
+
+def purchase_details(request, purchase_id):
+    purchase = get_object_or_404(PurchaseMaster, id=purchase_id)
+    purchase_details = PurchaseDetails.objects.filter(purchase_master=purchase)  # Use the object itself, not the ID
+    return render(request, 'purchase/purchase_details.html', {
+        'purchase_master': purchase,
+        'purchase_details': purchase_details
+    })
 def purchase_list(request):
     purchases = PurchaseMaster.objects.all()  
-    print(purchases)
+    # print(purchases)
     return render(request, 'purchase/purchase_list.html', {'purchases': purchases})
 
 def purchase_item(request):
@@ -25,8 +33,8 @@ def purchase_item(request):
             item_id = request.POST['item_id']
             item = Item.objects.filter(status=1, id=item_id).first()  # Use first() to get a single item
             brand = request.POST['brand_name_display']
-            price = float(request.POST.get('price', 0))  # Default to 0 if price is missing
-            quantity = int(request.POST.get('quantity', 0))  # Default to 0 if quantity is missing
+            price = float(request.POST.get('price', 0)) 
+            quantity = int(request.POST.get('quantity', 0))  
         
             # Calculate total amount
             total_amount = price * quantity
