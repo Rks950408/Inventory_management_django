@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Purchase Details
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="mb-4">Purchase Details for Invoice: <strong>{{ purchase_master.invoice_no }}</strong></h3>
+    
+    <!-- Supplier Details -->
+    <div class="mb-4">
+        <p>
+            <strong>Supplier Details:</strong> 
+            {{ purchase_master.supplier.supplier_name }},
+            Phone No: {{ purchase_master.supplier.phone_no }},
+            Address: {{ purchase_master.supplier.address }}
+        </p>
+        <p><strong>Invoice Date:</strong> {{ purchase_master.invoice_date|date:"d-m-Y" }}</p>
+        <p><strong>Total Amount:</strong> ₹ {{ purchase_master.total_amount }}</p>
+    </div>
+
+    <!-- Purchase Items Table -->
+    <table class="table table-bordered table-hover border-secondary">
+        <thead class="table-primary">
+            <tr>
+                <th scope="col">S.No.</th>
+                <th scope="col">Item Name</th>
+                <th scope="col">Price (₹)</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            {% for detail in purchase_details %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ detail.item.item_name }}</td>
+                <td>₹ {{ detail.price }}</td>
+                <td>{{ detail.quantity }}</td>
+                <td>₹ {{ detail.amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No items found for this purchase.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{% url 'purchase_list' %}">
+            <button class="btn btn-secondary">Back to Purchase List</button>
+        </a>
+    </div>
+</div>
+{% endblock %}

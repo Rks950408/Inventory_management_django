@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from django.http import JsonResponse
-from .models import PurchaseMaster, PurchaseDetails, Item, TempPurchaseDtls
+from .models import PurchaseMaster, PurchaseDetails, Item, TempPurchaseDtls,SaleMaster
 from supplier.models import Supplier
 from item_master.models import BrandMaster
 from django.utils import timezone
-import datetime
-
+import datetime 
+from datetime import date
 
 def purchase_details(request, purchase_id):
     purchase = get_object_or_404(PurchaseMaster, id=purchase_id)
@@ -61,8 +61,10 @@ def purchase_item(request):
                 )
                 
         get_purchase = TempPurchaseDtls.objects.filter(status=True).order_by('id')
+        print('getquery',get_purchase)
         if 'submit' in request.POST:
             for temp_item in get_purchase:
+                print('temp_item',temp_item)
                 print(f"Adding item with ID: {temp_item.item.id} to PurchaseDetails")
                 PurchaseDetails.objects.create(
                     item=temp_item.item,
@@ -107,3 +109,26 @@ def get_item_detls(request):
             return JsonResponse({'error': 'Item not found'}, status=404)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+# sale master
+
+
+def sale_list(request):
+    sales = SaleMaster.objects.all()  
+    # print(purchases)
+    curr_date = datetime.datetime.today().strftime('%d-%m-%Y')
+    return render(request, 'sale/sale_list.html',{ 'curr_date': curr_date})
+
+
+def sale_item(request):
+    return render(request, 'sale/sale_item.html')
+
+
+# stock report
+
+
+def stock_list(request):
+    return render(request, 'report/stock_list.html')
+
