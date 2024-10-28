@@ -7,28 +7,28 @@
 {% block content %}
 <h1 class="mb-3">Item Stock List :</h1>
 
-
-<div class=" d-flex justify-content-between my-4">
-
-    <!-- Search Box --> 
-    <form  role="search" onsubmit="event.preventDefault(); searchItem();">
-        <input class="form-control me-2" id="searchInput" type="search" placeholder="Search by Item Name" aria-label="Search">
+<div class="d-flex justify-content-between my-4">
+    <!-- Search Box -->
+    <form method="POST" id="searchForm">
+        {% csrf_token %}
+        <input class="form-control me-2" id="searchInput" name="search" type="search" placeholder="Search by Item Name" aria-label="Search">
+        <button type="submit" class="btn btn-primary">Search</button>
     </form>
-   
-    <!-- filte by item name   -->
+
+    <!-- Filter by Item Name -->
     <div class="mt-1">
         <label for="item">Filter by Item Name </label>
-        <select id="item" onclick="filterData()">
-            <option value="">All</option>
-            {% for stock in stock_data %}
-            <option value="{{ stock.0 }}">{{ stock.0 }}</option>
-            {% endfor %}
-        </select>
+        <form method="POST" id="filterForm">
+            {% csrf_token %}
+            <select id="item" name="item" onchange="this.form.submit()">
+                <option value="">All</option>
+                {% for stock in item_dtls %}
+                <option value="{{ stock.id }}">{{ stock.item_name }}</option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
-
 </div>
-
-
 
 <!-- Stock Table -->
 <table class="table table-bordered table-hover bg-white text-dark" style="border-color: indigo;">
@@ -48,7 +48,7 @@
             <td>{{ stock.0 }}</td>
             <td>{{ stock.1 }}</td>
             <td>{{ stock.2 }}</td>
-            <td>{{ stock.3 }}</td>
+            <td>{{ stock.3 }}</td>  <!-- Available Quantity -->
         </tr>
         {% empty %}
         <tr>
@@ -57,39 +57,5 @@
         {% endfor %}
     </tbody>
 </table>
-
-
-<script>
-    function filterData() {
-        const itemName = document.getElementById('item').value;
-        const tableRows = document.querySelectorAll('#stockTableBody tr');
-        
-        tableRows.forEach(row => {
-            const itemCell = row.children[1].textContent.trim();
-            
-            if (itemName === '' || itemCell === itemName) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    function searchItem() {
-        const searchInput = document.getElementById('searchInput').value.toLowerCase();
-        const tableRows = document.querySelectorAll('#stockTableBody tr');
-
-        if(searchInput!==""){
-            tableRows.forEach(row => {
-                const itemCell = row.children[1].textContent.toLowerCase();
-                if (itemCell.includes(searchInput)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-    }
-</script>
 
 {% endblock %}

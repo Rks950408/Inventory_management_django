@@ -9,6 +9,9 @@ from django.db.models import Sum
 from datetime import date
 import re
 
+from django.shortcuts import render
+from django.db import connection  
+
 def purchase_details(request, purchase_id):
     purchase = get_object_or_404(PurchaseMaster, id=purchase_id)
     purchase_details = PurchaseDetails.objects.filter(purchase_master=purchase)  # Use the object itself, not the ID
@@ -123,7 +126,7 @@ def sale_list(request):
     sales = SaleMaster.objects.all()  
     # print(purchases)
     curr_date = datetime.datetime.today().strftime('%d-%m-%Y')
-    return render(request, 'sale/sale_list.html',{ 'curr_date': curr_date})
+    return render(request, 'sale/sale_list.html',{ 'curr_date': curr_date,'sales':sales})
 
 
 def sale_item(request):
@@ -142,7 +145,7 @@ def sale_item(request):
             sale_master = SaleMaster(
                 invoice_no=request.POST['invoice_no'],
                 invoice_date=invoice_date,
-                supplier_id=request.POST['supplier_name'],
+                customer=Supplier.objects.get(id=request.POST['supplier_name']),  # Correct field name
                 total_amount=0.0,
                 datetime=timezone.now()
             )
@@ -178,7 +181,8 @@ def sale_item(request):
                         item_id=item_id,
                         quantity=int(quantity),
                         price=float(price),
-                        amount=float(total)
+                        amount=float(total),
+                        brand_name = request.POST['brand_name_display']
                     )
                     sale_detail.save()
                     total_amount += float(total)
@@ -189,7 +193,7 @@ def sale_item(request):
 
             # Clear TempPurchaseDtls
             TempSalesDtls.objects.filter(status=True).delete()
-            return redirect('supplier_list')  # Redirect to a success page after saving
+            return redirect('sale_list')  # Redirect to a success page after saving
 
     context = {
         'suppliers': suppliers,
@@ -197,7 +201,7 @@ def sale_item(request):
         'curr_date': curr_date,
         'get_purchase': get_purchase,
     }
-    return render(request, 'sale/sale_item.html',context)
+    return render(request, 'sale/sale_item.html', context)
 
 
 
@@ -227,9 +231,65 @@ def get_sale_detls(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+
+def sale_details(request, sale_id):
+    sales = get_object_or_404(SaleMaster, id=sale_id)
+    sale_details = SaleDetails.objects.filter(sale_master=sales)  # Use the object itself, not the ID
+    return render(request, 'sale/sale_details.html', {
+        'sale_master': sales,
+        'sale_details': sale_details
+    })
+
 # stock report
 
-
 def stock_list(request):
-    return render(request, 'report/stock_list.html')
+    item_dtls = Item.objects.filter(status=True)
 
+    item_id = request.POST.get('item', None)  # Get selected item id from POST
+    search_query = request.POST.get('search', '').strip()  # Get search query from POST
+
+    # Build the base query
+    base_query = '''
+        WITH purchase_data AS (
+            SELECT item_id, SUM(quantity) AS total_purchase_price
+            FROM public.purchase_details
+            GROUP BY item_id
+        ),
+        sale_data AS (
+            SELECT item_id, SUM(quantity) AS total_sale_price
+            FROM public.sale_details
+            GROUP BY item_id
+        )
+        SELECT 
+            item.item_name,
+            COALESCE(sale_data.total_sale_price, 0) AS total_sale_price,
+            COALESCE(purchase_data.total_purchase_price, 0) AS total_purchase_price,
+            COALESCE(total_purchase_price, 0) - COALESCE(total_sale_price, 0) AS available_quantity
+        FROM 
+            public.item_master item
+        LEFT JOIN 
+            purchase_data ON item.id = purchase_data.item_id
+        LEFT JOIN 
+            sale_data ON item.id = sale_data.item_id
+    '''
+
+    # Add filtering conditions
+    conditions = []
+    if item_id:
+        conditions.append(f'item.id = {item_id}')
+    if search_query:
+        conditions.append(f"item.item_name ILIKE '%{search_query}%'")  # Case-insensitive search
+
+    if conditions:
+        base_query += ' WHERE ' + ' AND '.join(conditions)
+
+    # Execute your query
+    with connection.cursor() as cursor:
+        cursor.execute(base_query)
+        stock_data = cursor.fetchall()  # Fetch all results
+
+    # Pass stock_data to your template
+    return render(request, 'report/stock_list.html', {
+        'item_dtls': item_dtls,
+        'stock_data': stock_data  # stock_data now contains the results from the query
+    })

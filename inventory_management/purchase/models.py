@@ -61,7 +61,7 @@ class TempPurchaseDtls(models.Model):
 class SaleMaster(models.Model):
     invoice_no=models.CharField(max_length=100 , blank=True , null=True)
     invoice_date=models.DateField(blank=True , null=True)
-    customer_id=models.ForeignKey(Supplier ,on_delete=models.CASCADE)
+    customer=models.ForeignKey(Supplier ,on_delete=models.CASCADE)
     total_amount = models.FloatField(blank=True, null=True)
     datetime = models.DateTimeField(default=timezone.now)
     status = models.BooleanField(default=True) 
@@ -75,17 +75,17 @@ class SaleMaster(models.Model):
 
 # Sale Details Model
 class SaleDetails(models.Model):
-    item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(blank=True, null=True)
     brand_name = models.CharField(max_length=100, blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     datetime = models.DateTimeField(default=timezone.now)
     status = models.BooleanField(default=True)
-    sale_master_id = models.ForeignKey(SaleMaster, on_delete=models.CASCADE) 
+    sale_master = models.ForeignKey(SaleMaster, on_delete=models.CASCADE) 
 
     def __str__(self):
-        return f"{self.item_id} - {self.sale_master_id}"
+        return f"{self.item} - {self.sale_master}"
     
     class Meta:
         db_table = 'sale_details'
