@@ -168,14 +168,12 @@ def sale_item(request):
                         item_details[item_id] = {}
                     item_details[item_id][field_name] = value
 
-            # Create PurchaseDetails entries from parsed item details
             for item_id, fields in item_details.items():
                 quantity = fields.get('quantity')
                 price = fields.get('price')
                 total = fields.get('total')
 
                 if item_id and quantity and price and total:
-                    # Create a new PurchaseDetails instance
                     sale_detail = SaleDetails(
                         sale_master=sale_master,
                         item_id=item_id,
@@ -217,13 +215,15 @@ def get_sale_detls(request):
 
             # Calculate the total quantity purchased from PurchaseDetails for the selected item
             total_quantity = PurchaseDetails.objects.filter(item_id=item_id).aggregate(Sum('quantity'))['quantity__sum'] or 0
-            
+            sold_quantity = SaleDetails.objects.filter(item_id=item_id).aggregate(Sum('quantity'))['quantity__sum'] or 0
+            # Calculate available quantity
+            available_quantity = total_quantity - sold_quantity
             data = {
                 'name': item.item_name,
                 'price': item.unit_price,
                 'brand_name': brand.brand_name if brand else None,
                 'brand_id': brand.id if brand else None,
-                'available_quantity': total_quantity  # Add the available quantity to the response
+                'available_quantity': available_quantity  
             }
             return JsonResponse(data)
         except Item.DoesNotExist:
@@ -245,8 +245,8 @@ def sale_details(request, sale_id):
 def stock_list(request):
     item_dtls = Item.objects.filter(status=True)
 
-    item_id = request.POST.get('item', None)  # Get selected item id from POST
-    search_query = request.POST.get('search', '').strip()  # Get search query from POST
+    item_id = request.POST.get('item', None)  
+    search_query = request.POST.get('search', '').strip() 
 
     # Build the base query
     base_query = '''
