@@ -5,8 +5,10 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Purchase Entry</h1>
-    <form name="master" method="POST" class="mt-4">
+    <!-- Main Form -->
+    <form name="purchase_form" method="POST" class="mt-4">
         {% csrf_token %}
+       
         <!-- Row for Invoice No and Invoice Date -->
         <div class="form-row">
             <div class="form-group col-md-4">
@@ -27,7 +29,7 @@
                 </select>
             </div>
         </div>
-    
+
         <!-- Row for Item Name and Quantity -->
         <div class="form-row">
             <div class="form-group col-md-3">
@@ -38,41 +40,35 @@
                         <option value="{{ item.id }}">{{ item.item_name }}</option>
                     {% endfor %}
                 </select>
-                {% if errors.item_id %}
-                    <div class="text-danger">{{ errors.item_id }}</div>
-                {% endif %}
             </div>
-    
+
             <div class="form-group col-md-3">
                 <label for="brand_name">Brand:</label>
                 <input type="text" id="brand_name" name="brand_name_display" class="form-control" readonly required>
                 <input type="hidden" id="brand" name="brand" required>
             </div>
-    
+
             <div class="form-group col-md-2">
                 <label for="price">Price:</label>
                 <input type="number" id="price" name="price" class="form-control" readonly required>
             </div>
-            
+
             <div class="form-group col-md-2">
                 <label for="quantity">Quantity:</label>
                 <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required>
             </div>
-            
+
             <div class="form-group col-md-2">
                 <label for="total">Total:</label>
                 <input type="number" id="total" name="total" class="form-control" readonly>
             </div>
         </div>
-    
-        <!-- Add Item Button -->
-        <button type="submit" name="addItemBtn" id="addItemBtn" class="btn btn-primary">Add Item</button>
-    </form>
-        <!-- Items List Table -->
-    <form name="form2" method="POST" class="mt-4">
-        {% csrf_token %}
-        <h2 class="mt-5">Purchase Details</h2>
 
+        <!-- Add Item Button -->
+        <button type="button" onclick="addItem()" class="btn btn-primary">Add Item</button>
+
+        <!-- Purchase Details Table -->
+        <h2 class="mt-5">Purchase Details</h2>
         <table id="itemsTable" class="table table-bordered mt-3">
             <thead class="thead-dark">
                 <tr>
@@ -85,26 +81,22 @@
                 </tr>
             </thead>
             <tbody>
-                {% for puch in get_purchase %}
-                    <tr>
-                        <td>{{puch.id}}</td>
-                        <td>{{puch.item.item_name}}</td>
-                        <td>{{puch.price}}</td>
-                        <td>{{puch.quantity}}</td>
-                        <td>{{puch.amount}}</td>
-                        <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
-                    </tr>
-                {% endfor %}
+                <!-- Items will be dynamically added here -->
             </tbody>
         </table>
-    
+
         <h3>Sub Total: <span id="subTotal">0.00</span></h3>
-        <button type="submit" name="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
+        <button type="submit" name="submit" value="Submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
+
+        <!-- Hidden inputs for submitted items -->
+        <div id="form2" style="display:none;"></div>
     </form>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    const invoiceNo = generateInvoiceNumber();
+
     function GetTdsAmount_Maint() {
         const item_id = document.getElementById("item_name").value;  
         $.ajax({
@@ -112,7 +104,8 @@
             url: "{% url 'get_item_detls' %}",  
             data: {
                 'item_id': item_id,
-                'csrfmiddlewaretoken': '{{ csrf_token }}'  
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'invoice_no': invoiceNo
             },
             success: function(data) {
                 document.getElementById("brand_name").value = data.brand_name;
@@ -121,16 +114,59 @@
                 const quantity = document.getElementById("quantity").value;
                 const price = data.price;
                 document.getElementById("total").value = quantity * price;
-                updateSubTotal();
             },
         });
     }
 
+    function addItem() {
+        const item_id = document.getElementById("item_name").value;
+        const item_name = document.getElementById("item_name").options[document.getElementById("item_name").selectedIndex].text;
+        const price = parseFloat(document.getElementById("price").value);
+        const quantity = parseInt(document.getElementById("quantity").value);
+        const total = quantity * price;
+
+        // Check if item is already in the table
+        let existingRow = null;
+        $("#itemsTable tbody tr").each(function() {
+            if ($(this).data("item-id") == item_id) {
+                existingRow = $(this);
+            }
+        });
+
+        if (existingRow) {
+            const currentQty = parseInt(existingRow.find(".quantity-cell").text());
+            const newQty = currentQty + quantity;
+            const newTotal = newQty * price;
+            existingRow.find(".quantity-cell").text(newQty);
+            existingRow.find(".total-cell").text(newTotal.toFixed(2));
+        } else {
+            const row = `
+                <tr data-item-id="${item_id}">
+                    <td>${$("#itemsTable tbody tr").length + 1}</td>
+                    <td>${item_name}</td>
+                    <td>${price.toFixed(2)}</td>
+                    <td class="quantity-cell">${quantity}</td>
+                    <td class="total-cell">${total.toFixed(2)}</td>
+                    <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
+                </tr>`;
+            $("#itemsTable tbody").append(row);
+
+            // Add hidden inputs for each item to the form
+            $('#form2').append(`
+                <input type="hidden" name="items[${item_id}][item_id]" value="${item_id}">
+                <input type="hidden" name="items[${item_id}][quantity]" value="${quantity}">
+                <input type="hidden" name="items[${item_id}][price]" value="${price}">
+                <input type="hidden" name="items[${item_id}][total]" value="${total}">
+            `);
+        }
+
+        updateSubTotal();
+    }
 
     function updateSubTotal() {
         let subtotal = 0;
         $("#itemsTable tbody tr").each(function() {
-            const total = parseFloat($(this).find("td:nth-child(5)").text());
+            const total = parseFloat($(this).find(".total-cell").text());
             if (!isNaN(total)) {
                 subtotal += total;
             }
@@ -143,6 +179,7 @@
         row.remove();
         updateSubTotal();
     }
+
     function generateInvoiceNumber() {
         const now = new Date();
         const year = now.getFullYear();
@@ -155,13 +192,9 @@
     }
 
     window.onload = function() {
-        document.getElementById("invoice_no").value = generateInvoiceNumber();
-         updateSubTotal();
+        document.getElementById("invoice_no").value = invoiceNo;
+        updateSubTotal();
     }
 </script>
 
 {% endblock %}
-
-
-
-

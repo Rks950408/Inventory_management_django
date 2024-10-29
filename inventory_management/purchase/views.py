@@ -6,6 +6,7 @@ from item_master.models import BrandMaster
 from django.utils import timezone
 import datetime 
 from datetime import date
+import re
 
 def purchase_details(request, purchase_id):
     purchase = get_object_or_404(PurchaseMaster, id=purchase_id)
@@ -18,77 +19,79 @@ def purchase_list(request):
     purchases = PurchaseMaster.objects.all()  
     # print(purchases)
     return render(request, 'purchase/purchase_list.html', {'purchases': purchases})
-
 def purchase_item(request):
-    suppliers = Supplier.objects.filter(status=1)
-    item_dtls = Item.objects.filter(status=1)
+    suppliers = Supplier.objects.filter(status=True)
+    item_dtls = Item.objects.filter(status=True)
     curr_date = datetime.datetime.today().strftime('%d-%m-%Y')
-    get_purchase = ''
+    get_purchase = TempPurchaseDtls.objects.filter(status=True).order_by('id')
+
     if request.method == 'POST':
-        if 'addItemBtn' in request.POST:
-            invoice_no = request.POST['invoice_no']
-            invoice_date = datetime.datetime.strptime(request.POST["invoice_date"], '%d-%m-%Y').date()
-            supplier_id = request.POST['supplier_name']
-            supp = Supplier.objects.filter(status=1, id=supplier_id).first()
-            item_id = request.POST['item_id']
-            item = Item.objects.filter(status=1, id=item_id).first()  # Use first() to get a single item
-            brand = request.POST['brand_name_display']
-            price = float(request.POST.get('price', 0)) 
-            quantity = int(request.POST.get('quantity', 0))  
-        
-            # Calculate total amount
-            total_amount = price * quantity
-
-            # Insert data into PurchaseMaster
-            insert_purchase = PurchaseMaster.objects.create(
-                invoice_no=invoice_no,
-                invoice_date=invoice_date,
-                supplier=supp,
-                total_amount=total_amount,
-                datetime=timezone.now(),
-                status=True
-            )
-            if insert_purchase:
-                temp_tbl  = TempPurchaseDtls.objects.create(
-                    item_id    = request.POST['item_id'],
-                    brand_name = request.POST['brand'],
-                    price      = request.POST['price'],
-                    quantity   = request.POST['quantity'],
-                    amount     = request.POST['total'],
-                    datetime   = timezone.now(),
-                    status     = True,
-                    purchase_master = insert_purchase
-                )
-                
-        get_purchase = TempPurchaseDtls.objects.filter(status=True).order_by('id')
-        print('getquery',get_purchase)
         if 'submit' in request.POST:
-            for temp_item in get_purchase:
-                print('temp_item',temp_item)
-                print(f"Adding item with ID: {temp_item.item.id} to PurchaseDetails")
-                PurchaseDetails.objects.create(
-                    item=temp_item.item,
-                    brand_name=temp_item.brand_name,
-                    price=temp_item.price,
-                    quantity=temp_item.quantity,
-                    amount=temp_item.amount,
-                    datetime=timezone.now(),
-                    status=True,
-                    purchase_master=temp_item.purchase_master
-                )
+            print(request.POST)  # Debug print to see the entire POST data
+            
+            invoice_date_str = request.POST['invoice_date']
+            invoice_date = datetime.datetime.strptime(invoice_date_str, '%d-%m-%Y').date()
 
-            TempPurchaseDtls.objects.filter(status=True).update(status=False)
-            return redirect('purchase_list')
+            purchase_master = PurchaseMaster(
+                invoice_no=request.POST['invoice_no'],
+                invoice_date=invoice_date,
+                supplier_id=request.POST['supplier_name'],
+                total_amount=0.0,
+                datetime=timezone.now()
+            )
+            purchase_master.save()
 
+            total_amount = 0
+            # Regex pattern to match 'items[<item_id>][field]'
+            item_pattern = re.compile(r'items\[(\d+)\]\[(\w+)\]')
 
-    return render(request, 'purchase/add_purchase.html', {
+            # Dictionary to temporarily hold item details
+            item_details = {}
+
+            # Extract item details from POST data
+            for key, value in request.POST.items():
+                match = item_pattern.match(key)
+                if match:
+                    item_id = match.group(1)  # Extract item_id
+                    field_name = match.group(2)  # Extract field (quantity, price, total)
+                    if item_id not in item_details:
+                        item_details[item_id] = {}
+                    item_details[item_id][field_name] = value
+
+            # Create PurchaseDetails entries from parsed item details
+            for item_id, fields in item_details.items():
+                quantity = fields.get('quantity')
+                price = fields.get('price')
+                total = fields.get('total')
+
+                if item_id and quantity and price and total:
+                    # Create a new PurchaseDetails instance
+                    purchase_detail = PurchaseDetails(
+                        purchase_master=purchase_master,
+                        item_id=item_id,
+                        quantity=int(quantity),
+                        price=float(price),
+                        amount=float(total)
+                    )
+                    purchase_detail.save()
+                    total_amount += float(total)
+                    print(f"Saved PurchaseDetail: {purchase_detail}")  # Confirm each detail saved
+
+            # Update the total_amount for PurchaseMaster
+            purchase_master.total_amount = total_amount
+            purchase_master.save()
+
+            # Clear TempPurchaseDtls
+            TempPurchaseDtls.objects.filter(status=True).delete()
+            return redirect('purchase_list')  # Redirect to a success page after saving
+
+    context = {
         'suppliers': suppliers,
         'item_dtls': item_dtls,
         'curr_date': curr_date,
-        'get_purchase' :get_purchase
-    })
-
-
+        'get_purchase': get_purchase,
+    }
+    return render(request, 'purchase/add_purchase.html', context)
 def get_item_detls(request):
     if request.method == 'POST':
         item_id = request.POST.get('item_id')
