@@ -293,3 +293,10 @@ def stock_list(request):
         'item_dtls': item_dtls,
         'stock_data': stock_data  # stock_data now contains the results from the query
     })
+    
+    
+# details purchase and sales
+
+def details_sale_prchse(request):
+    # print(purchases)
+    return render(request, 'report/details_stock.html')
