@@ -10,15 +10,21 @@
     
     <!-- Supplier Details -->
     <div class="mb-4">
-        <p>
-            <strong>Supplier Details:</strong> 
-            {{ purchase_master.supplier.supplier_name }},
-            Phone No: {{ purchase_master.supplier.phone_no }},
-            Address: {{ purchase_master.supplier.address }}
+        <p class="medium-text">
+            <strong>Supplier Details:</strong>
+            <br>
+            <strong>Name:</strong> {{ purchase_master.supplier.name }},<br>
+            <strong>Phone No:</strong> {{ purchase_master.supplier.contact }},<br>
+            <strong>Address:</strong> {{ purchase_master.supplier.address }}
         </p>
-        <p><strong>Invoice Date:</strong> {{ purchase_master.invoice_date|date:"d-m-Y" }}</p>
-        <p><strong>Total Amount:</strong> ₹ {{ purchase_master.total_amount }}</p>
+        <p class="medium-text">
+            <strong>Invoice Date:</strong> {{ purchase_master.invoice_date|date:"d-m-Y" }}
+        </p>
+        <p class="medium-text">
+            <strong>Total Amount:</strong> ₹ {{ purchase_master.total_amount }}
+        </p>
     </div>
+    
 
     <!-- Purchase Items Table -->
     <table class="table table-bordered table-hover border-secondary">

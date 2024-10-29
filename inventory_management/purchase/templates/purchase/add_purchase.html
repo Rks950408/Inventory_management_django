@@ -124,7 +124,7 @@
         const price = parseFloat(document.getElementById("price").value);
         const quantity = parseInt(document.getElementById("quantity").value);
         const total = quantity * price;
-
+    
         // Check if item is already in the table
         let existingRow = null;
         $("#itemsTable tbody tr").each(function() {
@@ -132,14 +132,20 @@
                 existingRow = $(this);
             }
         });
-
+    
         if (existingRow) {
+            // Update existing row
             const currentQty = parseInt(existingRow.find(".quantity-cell").text());
             const newQty = currentQty + quantity;
             const newTotal = newQty * price;
             existingRow.find(".quantity-cell").text(newQty);
             existingRow.find(".total-cell").text(newTotal.toFixed(2));
+    
+            // Update hidden inputs
+            $(`#form2 input[name='items[${item_id}][quantity]']`).val(newQty);
+            $(`#form2 input[name='items[${item_id}][total]']`).val(newTotal.toFixed(2));
         } else {
+            // Add new row to the table
             const row = `
                 <tr data-item-id="${item_id}">
                     <td>${$("#itemsTable tbody tr").length + 1}</td>
@@ -150,7 +156,7 @@
                     <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
                 </tr>`;
             $("#itemsTable tbody").append(row);
-
+    
             // Add hidden inputs for each item to the form
             $('#form2').append(`
                 <input type="hidden" name="items[${item_id}][item_id]" value="${item_id}">
@@ -159,9 +165,10 @@
                 <input type="hidden" name="items[${item_id}][total]" value="${total}">
             `);
         }
-
+    
         updateSubTotal();
     }
+    
 
     function updateSubTotal() {
         let subtotal = 0;
