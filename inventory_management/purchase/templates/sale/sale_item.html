@@ -1,20 +1,18 @@
 {% extends 'base.html' %}
 
-
 {% block title %}Sale Form{% endblock %}
-
 
 {% block content %}
 <div class="container mt-5">
     <h1>Sales Entry</h1>
     <!-- Main Form -->
-    <form name="master" method="POST" class="mt-4">
+    <form name="purchase_form" method="POST" class="mt-4">
         {% csrf_token %}
+       
         <!-- Row for Invoice No and Invoice Date -->
         <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="invoice_no">Invoice No:</label>
-                <!-- Invoice number field should not be editable by the user -->
                 <input type="text" id="invoice_no" name="invoice_no" class="form-control" readonly>
             </div>
             <div class="form-group col-md-4">
@@ -22,16 +20,15 @@
                 <input type="input" id="invoice_date" name="invoice_date" value="{{ curr_date }}" class="form-control">
             </div>
             <div class="form-group col-md-4">
-                <label for="supplier_name">Supplier Name:</label>
+                <label for="supplier_name">Customer Name:</label>
                 <select id="supplier_name" name="supplier_name" class="form-control" required>  
-                    <option value="">Select Supplier</option>
+                    <option value="">Select Customer</option>
                     {% for supplier in suppliers %}
                         <option value="{{ supplier.id }}">{{ supplier.name }}</option>
                     {% endfor %}
                 </select>
             </div>
         </div>
-
 
         <!-- Row for Item Name and Quantity -->
         <div class="form-row">
@@ -45,44 +42,37 @@
                 </select>
             </div>
 
-
             <div class="form-group col-md-3">
                 <label for="brand_name">Brand:</label>
                 <input type="text" id="brand_name" name="brand_name_display" class="form-control" readonly required>
                 <input type="hidden" id="brand" name="brand" required>
             </div>
 
+            
 
+            <div class="form-group col-md-2">
+                <label for="available_quantity">Available Quantity:</label>
+                <input type="number" id="available_quantity" class="form-control" placeholder="Available Quantity" readonly>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="quantity">Quantity to Sale:</label>
+                <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required>
+            </div>
             <div class="form-group col-md-2">
                 <label for="price">Price:</label>
                 <input type="number" id="price" name="price" class="form-control" readonly required>
             </div>
-
-
-            <div class="form-group col-md-2">
-                <label for="quantity">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required>
-            </div>
-
-
             <div class="form-group col-md-2">
                 <label for="total">Total:</label>
                 <input type="number" id="total" name="total" class="form-control" readonly>
             </div>
         </div>
 
-
         <!-- Add Item Button -->
-        <button type="button" onclick="addItem()" class="btn btn-primary">Add Item</button>
-    </form>
+        <button type="button" onclick="addItem()" class="btn btn-primary">Sale Item</button>
 
-
-    <!-- Purchase Details Table -->
-    <form name="form2" method="POST" class="mt-4">
-        {% csrf_token %}
-        <h2 class="mt-5">Sales Details</h2>
-
-
+        <!-- Purchase Details Table -->
+        <h2 class="mt-5">Sale Details</h2>
         <table id="itemsTable" class="table table-bordered mt-3">
             <thead class="thead-dark">
                 <tr>
@@ -95,36 +85,27 @@
                 </tr>
             </thead>
             <tbody>
-                {% for puch in get_purchase %}
-                    <tr data-item-id="{{ puch.item.id }}">
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ puch.item.item_name }}</td>
-                        <td>{{ puch.price }}</td>
-                        <td class="quantity-cell">{{ puch.quantity }}</td>
-                        <td class="total-cell">{{ puch.amount }}</td>
-                        <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
-                    </tr>
-                {% endfor %}
+                <!-- Items will be dynamically added here -->
             </tbody>
         </table>
 
-
         <h3>Sub Total: <span id="subTotal">0.00</span></h3>
-        <button type="submit" name="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
+        <button type="submit" name="submit" value="Submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 btn btn-primary">Submit</button>
+
+        <!-- Hidden inputs for submitted items -->
+        <div id="form2" style="display:none;"></div>
     </form>
 </div>
-
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const invoiceNo = generateInvoiceNumber();
 
-
     function GetTdsAmount_Maint() {
         const item_id = document.getElementById("item_name").value;  
         $.ajax({
             type: "POST",
-            url: "{% url 'get_item_detls' %}",  
+            url: "{% url 'get_sale_detls' %}",  
             data: {
                 'item_id': item_id,
                 'csrfmiddlewaretoken': '{{ csrf_token }}',
@@ -134,66 +115,99 @@
                 document.getElementById("brand_name").value = data.brand_name;
                 document.getElementById("brand").value = data.brand_id;
                 document.getElementById("price").value = data.price;
-                const quantity = document.getElementById("quantity").value;
-                const price = data.price;
-                document.getElementById("total").value = quantity * price;
+    
+                // Set the available quantity in the designated input box
+                document.getElementById("available_quantity").value = data.available_quantity;
+    
+                // Update total based on quantity and price
+                updateTotal();
             },
+            error: function(xhr) {
+                alert("Error: " + xhr.responseJSON.error);
+            }
         });
     }
-
-
-   function addItem() {
-    const item_id = document.getElementById("item_name").value;
-    const item_name = document.getElementById("item_name").options[document.getElementById("item_name").selectedIndex].text;
-    const price = parseFloat(document.getElementById("price").value);
-    const quantity = parseInt(document.getElementById("quantity").value);
-    const total = quantity * price;
-
-
-    // Check if item is already in the table
-    let existingRow = null;
-    $("#itemsTable tbody tr").each(function() {
-        if ($(this).data("item-id") == item_id) {
-            existingRow = $(this);
-        }
-    });
-
-
-    if (existingRow) {
-        // Update quantity and total for the existing item
-        const currentQty = parseInt(existingRow.find(".quantity-cell").text());
-        const newQty = currentQty + quantity;
-        const newTotal = newQty * price;
-        existingRow.find(".quantity-cell").text(newQty);
-        existingRow.find(".total-cell").text(newTotal.toFixed(2));
-    } else {
-        // Add a new row for the new item
-        const row = `
-            <tr data-item-id="${item_id}">
-                <td>${$("#itemsTable tbody tr").length + 1}</td>
-                <td>${item_name}</td>
-                <td>${price.toFixed(2)}</td>
-                <td class="quantity-cell">${quantity}</td>
-                <td class="total-cell">${total.toFixed(2)}</td>
-                <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
-            </tr>`;
-        $("#itemsTable tbody").append(row);
-       
-        // Add hidden inputs for each item to the form
-        $('#form2').append(`
-            <input type="hidden" name="items[${item_id}][item_id]" value="${item_id}">
-            <input type="hidden" name="items[${item_id}][quantity]" value="${quantity}">
-            <input type="hidden" name="items[${item_id}][price]" value="${price}">
-            <input type="hidden" name="items[${item_id}][total]" value="${total}">
-        `);
+    
+    function updateTotal() {
+        const quantity = parseInt(document.getElementById("quantity").value) || 0;
+        const price = parseFloat(document.getElementById("price").value) || 0;
+        const total = quantity * price;
+    
+        document.getElementById("total").value = total.toFixed(2);
     }
+    
+    // Update total whenever the quantity input changes
+    document.getElementById("quantity").addEventListener("change", updateTotal);
+    
 
-
-    updateSubTotal();
-}
-
-
-
+    function addItem() {
+        const item_id = document.getElementById("item_name").value;
+        const item_name = document.getElementById("item_name").options[document.getElementById("item_name").selectedIndex].text;
+        const price = parseFloat(document.getElementById("price").value);
+        const quantity = parseInt(document.getElementById("quantity").value);
+        const availableQuantity = parseInt(document.getElementById("available_quantity").value);
+    
+        // Check if requested quantity exceeds available quantity
+        if (quantity > availableQuantity) {
+            alert("Error: Quantity to sell exceeds available quantity.");
+            return; // Exit the function if the quantity is invalid
+        }
+    
+        const total = quantity * price;
+    
+        // Check if item is already in the table
+        let existingRow = null;
+        $("#itemsTable tbody tr").each(function() {
+            if ($(this).data("item-id") == item_id) {
+                existingRow = $(this);
+            }
+        });
+    
+        if (existingRow) {
+            // Update existing row
+            const currentQty = parseInt(existingRow.find(".quantity-cell").text());
+            const newQty = currentQty + quantity;
+            const newTotal = newQty * price;
+    
+            // Check if the new quantity exceeds the available quantity
+            if (newQty > availableQuantity) {
+                alert("Error: Total quantity exceeds available quantity.");
+                return; // Exit the function if the new quantity is invalid
+            }
+    
+            existingRow.find(".quantity-cell").text(newQty);
+            existingRow.find(".total-cell").text(newTotal.toFixed(2));
+    
+            // Update hidden inputs
+            $(`#form2 input[name='items[${item_id}][quantity]']`).val(newQty);
+            $(`#form2 input[name='items[${item_id}][total]']`).val(newTotal.toFixed(2));
+        } else {
+            // Add new row to the table
+            const row = `
+                <tr data-item-id="${item_id}">
+                    <td>${$("#itemsTable tbody tr").length + 1}</td>
+                    <td>${item_name}</td>
+                    <td>${price.toFixed(2)}</td>
+                    <td class="quantity-cell">${quantity}</td>
+                    <td class="total-cell">${total.toFixed(2)}</td>
+                    <td><button type="button" onclick="removeItem(this)" class="btn btn-danger">Delete</button></td>
+                </tr>`;
+            $("#itemsTable tbody").append(row);
+    
+            // Add hidden inputs for each item to the form
+            $('#form2').append(`
+                <input type="hidden" name="items[${item_id}][item_id]" value="${item_id}">
+                <input type="hidden" name="items[${item_id}][quantity]" value="${quantity}">
+                <input type="hidden" name="items[${item_id}][price]" value="${price}">
+                <input type="hidden" name="items[${item_id}][total]" value="${total}">
+            `);
+        }
+    
+        updateSubTotal();
+    }
+    
+    
+    
 
     function updateSubTotal() {
         let subtotal = 0;
@@ -206,13 +220,11 @@
         document.getElementById("subTotal").textContent = subtotal.toFixed(2);
     }
 
-
     function removeItem(btn) {
         const row = btn.closest("tr");
         row.remove();
         updateSubTotal();
     }
-
 
     function generateInvoiceNumber() {
         const now = new Date();
@@ -225,14 +237,10 @@
         return `INV-${year}${month}${day}-${hours}${minutes}${seconds}`;
     }
 
-
     window.onload = function() {
         document.getElementById("invoice_no").value = invoiceNo;
         updateSubTotal();
     }
 </script>
 
-
 {% endblock %}
-
-
