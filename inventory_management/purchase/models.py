@@ -77,6 +77,7 @@ class SaleMaster(models.Model):
 class SaleDetails(models.Model):
     item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(blank=True, null=True)
+    brand_name = models.CharField(max_length=100, blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     datetime = models.DateTimeField(default=timezone.now)
@@ -91,3 +92,20 @@ class SaleDetails(models.Model):
         managed = False
     
     
+class TempSalesDtls(models.Model):
+    id = models.AutoField(primary_key=True)  
+    item_id = models.ForeignKey('item_master.Item', on_delete=models.CASCADE)  
+    brand_name = models.CharField(max_length=100, blank=True, null=True)
+    quantity = models.PositiveIntegerField(blank=True, null=True)
+    price = models.FloatField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True)
+    datetime = models.DateTimeField(default=timezone.now)
+    status = models.BooleanField(default=True)
+    sale_master_id = models.ForeignKey('purchase.SaleMaster', on_delete=models.CASCADE)  
+
+    def __str__(self):
+        return f"{self.item_id} - {self.sale_master_id}"
+    
+    class Meta:
+        db_table = 'tbl_temp_sales_details'
+        managed = False

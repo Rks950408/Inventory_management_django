@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from django.http import JsonResponse
-from .models import PurchaseMaster, PurchaseDetails, Item, TempPurchaseDtls,SaleMaster
+from .models import PurchaseMaster, PurchaseDetails, Item, TempPurchaseDtls,SaleMaster,TempSalesDtls,SaleMaster,SaleDetails
 from supplier.models import Supplier
 from item_master.models import BrandMaster
 from django.utils import timezone
@@ -130,7 +130,7 @@ def sale_item(request):
     suppliers = Supplier.objects.filter(status=True)
     item_dtls = Item.objects.filter(status=True)
     curr_date = datetime.datetime.today().strftime('%d-%m-%Y')
-    get_purchase = TempPurchaseDtls.objects.filter(status=True).order_by('id')
+    get_purchase = TempSalesDtls.objects.filter(status=True).order_by('id')
 
     if request.method == 'POST':
         if 'submit' in request.POST:
@@ -139,14 +139,14 @@ def sale_item(request):
             invoice_date_str = request.POST['invoice_date']
             invoice_date = datetime.datetime.strptime(invoice_date_str, '%d-%m-%Y').date()
 
-            purchase_master = PurchaseMaster(
+            sale_master = SaleMaster(
                 invoice_no=request.POST['invoice_no'],
                 invoice_date=invoice_date,
                 supplier_id=request.POST['supplier_name'],
                 total_amount=0.0,
                 datetime=timezone.now()
             )
-            purchase_master.save()
+            sale_master.save()
 
             total_amount = 0
             # Regex pattern to match 'items[<item_id>][field]'
@@ -173,23 +173,22 @@ def sale_item(request):
 
                 if item_id and quantity and price and total:
                     # Create a new PurchaseDetails instance
-                    purchase_detail = PurchaseDetails(
-                        purchase_master=purchase_master,
+                    sale_detail = SaleDetails(
+                        sale_master=sale_master,
                         item_id=item_id,
                         quantity=int(quantity),
                         price=float(price),
                         amount=float(total)
                     )
-                    purchase_detail.save()
+                    sale_detail.save()
                     total_amount += float(total)
-                    print(f"Saved PurchaseDetail: {purchase_detail}")  # Confirm each detail saved
+                    print(f"Saved SaleDetail: {sale_detail}")  # Confirm each detail saved
 
-            # Update the total_amount for PurchaseMaster
-            purchase_master.total_amount = total_amount
-            purchase_master.save()
+            sale_master.total_amount = total_amount
+            sale_master.save()
 
             # Clear TempPurchaseDtls
-            TempPurchaseDtls.objects.filter(status=True).delete()
+            TempSalesDtls.objects.filter(status=True).delete()
             return redirect('supplier_list')  # Redirect to a success page after saving
 
     context = {
