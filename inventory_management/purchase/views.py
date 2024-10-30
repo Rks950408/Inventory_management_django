@@ -14,7 +14,7 @@ from django.db import connection
 
 def purchase_details(request, purchase_id):
     purchase = get_object_or_404(PurchaseMaster, id=purchase_id)
-    purchase_details = PurchaseDetails.objects.filter(purchase_master=purchase)  # Use the object itself, not the ID
+    purchase_details = PurchaseDetails.objects.filter(purchase_master=purchase)  
     return render(request, 'purchase/purchase_details.html', {
         'purchase_master': purchase,
         'purchase_details': purchase_details
@@ -31,7 +31,7 @@ def purchase_item(request):
 
     if request.method == 'POST':
         if 'submit' in request.POST:
-            print(request.POST)  # Debug print to see the entire POST data
+            print(request.POST)  # Debug the data what we by frontend
             
             invoice_date_str = request.POST['invoice_date']
             invoice_date = datetime.datetime.strptime(invoice_date_str, '%d-%m-%Y').date()
@@ -46,17 +46,17 @@ def purchase_item(request):
             purchase_master.save()
 
             total_amount = 0
-            # Regex pattern to match 'items[<item_id>][field]'
+            # /Regex pattern to match 'items[<item_id>][field]'/
             item_pattern = re.compile(r'items\[(\d+)\]\[(\w+)\]')
 
-            # Dictionary to temporarily hold item details
+            # /Dictionary to temporarily hold item details............./
             item_details = {}
 
             # Extract item details from POST data
             for key, value in request.POST.items():
                 match = item_pattern.match(key)
                 if match:
-                    item_id = match.group(1)  # Extract item_id
+                    item_id = match.group(1)  
                     field_name = match.group(2)  # Extract field (quantity, price, total)
                     if item_id not in item_details:
                         item_details[item_id] = {}
@@ -79,15 +79,14 @@ def purchase_item(request):
                     )
                     purchase_detail.save()
                     total_amount += float(total)
-                    print(f"Saved PurchaseDetail: {purchase_detail}")  # Confirm each detail saved
+                    print(f"Saved PurchaseDetail: {purchase_detail}")  
 
-            # Update the total_amount for PurchaseMaster
             purchase_master.total_amount = total_amount
             purchase_master.save()
 
             # Clear TempPurchaseDtls
             TempPurchaseDtls.objects.filter(status=True).delete()
-            return redirect('purchase_list')  # Redirect to a success page after saving
+            return redirect('purchase_list')  
 
     context = {
         'suppliers': suppliers,
@@ -145,7 +144,7 @@ def sale_item(request):
             sale_master = SaleMaster(
                 invoice_no=request.POST['invoice_no'],
                 invoice_date=invoice_date,
-                customer=Supplier.objects.get(id=request.POST['supplier_name']),  # Correct field name
+                customer=Supplier.objects.get(id=request.POST['supplier_name']),  
                 total_amount=0.0,
                 datetime=timezone.now()
             )
@@ -155,15 +154,13 @@ def sale_item(request):
             # Regex pattern to match 'items[<item_id>][field]'
             item_pattern = re.compile(r'items\[(\d+)\]\[(\w+)\]')
 
-            # Dictionary to temporarily hold item details
             item_details = {}
 
-            # Extract item details from POST data
             for key, value in request.POST.items():
                 match = item_pattern.match(key)
                 if match:
-                    item_id = match.group(1)  # Extract item_id
-                    field_name = match.group(2)  # Extract field (quantity, price, total)
+                    item_id = match.group(1)  
+                    field_name = match.group(2)  
                     if item_id not in item_details:
                         item_details[item_id] = {}
                     item_details[item_id][field_name] = value
@@ -184,14 +181,14 @@ def sale_item(request):
                     )
                     sale_detail.save()
                     total_amount += float(total)
-                    print(f"Saved SaleDetail: {sale_detail}")  # Confirm each detail saved
+                    print(f"Saved SaleDetail: {sale_detail}") 
 
             sale_master.total_amount = total_amount
             sale_master.save()
 
             # Clear TempPurchaseDtls
             TempSalesDtls.objects.filter(status=True).delete()
-            return redirect('sale_list')  # Redirect to a success page after saving
+            return redirect('sale_list')  
 
     context = {
         'suppliers': suppliers,
@@ -216,7 +213,6 @@ def get_sale_detls(request):
             # Calculate the total quantity purchased from PurchaseDetails for the selected item
             total_quantity = PurchaseDetails.objects.filter(item_id=item_id).aggregate(Sum('quantity'))['quantity__sum'] or 0
             sold_quantity = SaleDetails.objects.filter(item_id=item_id).aggregate(Sum('quantity'))['quantity__sum'] or 0
-            # Calculate available quantity
             available_quantity = total_quantity - sold_quantity
             data = {
                 'name': item.item_name,
@@ -234,7 +230,7 @@ def get_sale_detls(request):
 
 def sale_details(request, sale_id):
     sales = get_object_or_404(SaleMaster, id=sale_id)
-    sale_details = SaleDetails.objects.filter(sale_master=sales)  # Use the object itself, not the ID
+    sale_details = SaleDetails.objects.filter(sale_master=sales)  
     return render(request, 'sale/sale_details.html', {
         'sale_master': sales,
         'sale_details': sale_details
@@ -248,7 +244,6 @@ def stock_list(request):
     item_id = request.POST.get('item', None)  
     search_query = request.POST.get('search', '').strip() 
 
-    # Build the base query
     base_query = '''
         WITH purchase_data AS (
             SELECT item_id, SUM(quantity) AS total_purchase_price
@@ -273,30 +268,54 @@ def stock_list(request):
             sale_data ON item.id = sale_data.item_id
     '''
 
-    # Add filtering conditions
     conditions = []
     if item_id:
         conditions.append(f'item.id = {item_id}')
     if search_query:
-        conditions.append(f"item.item_name ILIKE '%{search_query}%'")  # Case-insensitive search
+        conditions.append(f"item.item_name ILIKE '%{search_query}%'")  
 
     if conditions:
         base_query += ' WHERE ' + ' AND '.join(conditions)
 
-    # Execute your query
     with connection.cursor() as cursor:
         cursor.execute(base_query)
-        stock_data = cursor.fetchall()  # Fetch all results
+        stock_data = cursor.fetchall()  
 
-    # Pass stock_data to your template
     return render(request, 'report/stock_list.html', {
         'item_dtls': item_dtls,
-        'stock_data': stock_data  # stock_data now contains the results from the query
+        'stock_data': stock_data  
     })
     
     
 # details purchase and sales
 
 def details_sale_prchse(request):
-    # print(purchases)
-    return render(request, 'report/details_stock.html')
+    items = None
+    item_options = Item.objects.all()  
+
+    if request.method == 'GET':
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        selected_item = request.GET.get('item', 'all')
+        selected_type = request.GET.get('type', 'purchase')
+
+        if from_date and to_date:
+            from_date = timezone.datetime.strptime(from_date, '%Y-%m-%d')
+            to_date = timezone.datetime.strptime(to_date, '%Y-%m-%d')
+
+            if selected_type == 'purchase':
+                items = PurchaseDetails.objects.filter(datetime__range=(from_date, to_date))
+                if selected_item != 'all':
+                    items = items.filter(item__item_name=selected_item)
+            else:  # selected_type == 'sale'
+                items = SaleDetails.objects.filter(datetime__range=(from_date, to_date))
+                if selected_item != 'all':
+                    items = items.filter(item__item_name=selected_item)
+
+    context = {
+        'items': items,
+        'item_options': item_options,  
+        'selected_item': selected_item,
+        'selected_type': selected_type,
+    }
+    return render(request, 'report/details_stock.html', context)
