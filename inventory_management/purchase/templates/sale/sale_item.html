@@ -56,7 +56,7 @@
             </div>
             <div class="form-group col-md-2">
                 <label for="quantity">Quantity to Sale:</label>
-                <input type="number" id="quantity" name="quantity" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required>
+                <input type="number" id="quantity" name="quantity" min="0" onchange="GetTdsAmount_Maint()" class="form-control" placeholder="Enter Quantity" required  oninput="validateQuantity(this)">
             </div>
             <div class="form-group col-md-2">
                 <label for="price">Price:</label>
@@ -194,7 +194,6 @@
                 </tr>`;
             $("#itemsTable tbody").append(row);
     
-            // Add hidden inputs for each item to the form
             $('#form2').append(`
                 <input type="hidden" name="items[${item_id}][item_id]" value="${item_id}">
                 <input type="hidden" name="items[${item_id}][quantity]" value="${quantity}">
@@ -207,7 +206,11 @@
     }
     
     
-    
+    function validateQuantity(input) {
+        if (input.value < 0) {
+            input.value = 0;
+        }
+    }
 
     function updateSubTotal() {
         let subtotal = 0;
