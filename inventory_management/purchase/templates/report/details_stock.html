@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Detailed Report{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Detailed List :</h2>
+    <form class="form-inline mb-4" method="GET" action="{% url 'sale_purs_details' %}">
+        <label class="mr-2">From Date:</label>
+    <input type="date" name="from_date" class="form-control mr-3" required value="{{ request.GET.from_date }}">
+    
+    <label class="mr-2">To Date:</label>
+    <input type="date" name="to_date" class="form-control mr-3" required value="{{ request.GET.to_date }}">
+    
+        <label class="mr-2">Item:</label>
+        <select name="item" class="form-control mr-3">
+            <option value="all" {% if selected_item == 'all' %}selected{% endif %}>All</option>
+            {% for item in item_options %}
+                <option value="{{ item.item_name }}" {% if selected_item == item.item_name %}selected{% endif %}>{{ item.item_name }}</option>
+            {% endfor %}
+        </select>
+    
+        <label class="mr-2">Select Type:</label>
+        <select name="type" class="form-control mr-3" id="type-select" onchange="updateTableHeader()">
+            <option value="purchase" {% if selected_type == 'purchase' %}selected{% endif %}>Purchase</option>
+            <option value="sale" {% if selected_type == 'sale' %}selected{% endif %}>Sale</option>
+        </select>
+    
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    
+
+    <table class="table table-bordered table-hover">
+        <thead style="background-color: #007bff; color: white;">
+            <tr>
+                <th>S.No.</th>
+                <th>Item Name</th>
+                <th>Item Price</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+                <th>Date</th>
+                <th id="supplier-header">Supplier</th> 
+            </tr>
+        </thead>
+        <tbody>
+            {% if items %}
+                {% for item in items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.item.item_name }}</td> 
+                        <td>{{ item.price }}</td> 
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.amount }}</td> 
+                        <td>{{ item.datetime|date:"d-m-y" }}</td> 
+                        <td>
+                            {% if selected_type == 'purchase' %}
+                                {{ item.purchase_master.supplier }}
+                            {% else %}
+                                {{ item.sale_master.customer }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No Items Available</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function updateTableHeader() {
+        const select = document.getElementById('type-select');
+        const selectedValue = select.value;
+        const supplierHeader = document.getElementById('supplier-header');
+
+        if (selectedValue === 'sale') {
+            supplierHeader.innerText = 'Customer'; 
+        } else {
+            supplierHeader.innerText = 'Supplier'; 
+        }
+    }
+    window.onload = updateTableHeader;
+</script>
+
+{% endblock %}
