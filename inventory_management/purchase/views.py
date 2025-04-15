@@ -94,7 +94,8 @@ def purchase_item(request):
         'curr_date': curr_date,
         'get_purchase': get_purchase,
     }
-    return render(request, 'purchase/add_purchase.html', context)
+    return render(request, 'purchase/add_purchase.html', context) 
+
 def get_item_detls(request):
     if request.method == 'POST':
         item_id = request.POST.get('item_id')

@@ -18,7 +18,6 @@ urlpatterns = [
 
 
     # stock report
-
     path('stock/', stock_list, name='stock_list'),
     path('details_stock/', details_sale_prchse, name='sale_purs_details'),
 ]
